@@ -1,7 +1,7 @@
 #!/bin/sh
 
 usage() {
-  >&2 echo "Usage: volume-backup <backup|restore> <archive or - for stdin/stdout>"
+  >&2 echo "Usage: volume-backup <backup|restore>"
   exit 1
 }
 
@@ -11,23 +11,12 @@ backup() {
        exit 1
     fi
 
-    if ! [ "$ARCHIVE" == "-" ]; then
-        mkdir -p `dirname /backup/$ARCHIVE`
-    fi
-
-    tar -cf $ARCHIVE_PATH -C /volume ./
+    tar -cf - -C /volume ./ | lz4
 }
 
 restore() {
-    if ! [ "$ARCHIVE" == "-" ]; then
-        if ! [ -e $ARCHIVE_PATH ]; then
-            >&2 echo "Archive file $ARCHIVE does not exist"
-            exit 1
-        fi
-    fi
-
     rm -rf /volume/* /volume/..?* /volume/.[!.]*
-    tar -C /volume/ -xf $ARCHIVE_PATH
+    lz4 -dc --no-sparse - | tar -C /volume/ -xf -
 }
 
 # Needed because sometimes pty is not ready when executing docker-compose run
@@ -40,14 +29,6 @@ if [ $# -ne 2 ]; then
 fi
 
 OPERATION=$1
-
-if [ "$2" == "-" ]; then
-    ARCHIVE=$2
-    ARCHIVE_PATH=$ARCHIVE
-else
-    ARCHIVE=${2%%.tar}.tar
-    ARCHIVE_PATH=/backup/$ARCHIVE
-fi
 
 case "$OPERATION" in
 "backup" )
