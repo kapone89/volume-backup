@@ -15,7 +15,7 @@ backup() {
         mkdir -p `dirname /backup/$ARCHIVE`
     fi
 
-    tar -cjf $ARCHIVE_PATH -C /volume ./
+    tar -cf $ARCHIVE_PATH -C /volume ./
 }
 
 restore() {
@@ -27,7 +27,7 @@ restore() {
     fi
 
     rm -rf /volume/* /volume/..?* /volume/.[!.]*
-    tar -C /volume/ -xjf $ARCHIVE_PATH
+    tar -C /volume/ -xf $ARCHIVE_PATH
 }
 
 # Needed because sometimes pty is not ready when executing docker-compose run
@@ -45,7 +45,7 @@ if [ "$2" == "-" ]; then
     ARCHIVE=$2
     ARCHIVE_PATH=$ARCHIVE
 else
-    ARCHIVE=${2%%.tar.bz2}.tar.bz2
+    ARCHIVE=${2%%.tar}.tar
     ARCHIVE_PATH=/backup/$ARCHIVE
 fi
 
